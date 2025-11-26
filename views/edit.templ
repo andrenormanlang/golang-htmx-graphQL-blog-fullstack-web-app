@@ -14,8 +14,10 @@ templ EditPost(post models.Post) {
 			<title>Edit Post - BlogFlex</title>
 			<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
 			<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/>
-			<!-- TinyMCE Script -->
-			<script src="https://cdn.tiny.cloud/1/3ptuccpjxd9qd48kti566c6geohm1x5u2jhrl4szbz9l14ee/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+			
+			<!-- TinyMCE Script - UPDATED TO VERSION 8 -->
+			<script src="https://cdn.tiny.cloud/1/3ptuccpjxd9qd48kti566c6geohm1x5u2jhrl4szbz9l14ee/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+			
 			<!-- Prism.js for code syntax highlighting -->
 			<link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-okaidia.css" rel="stylesheet"/>
 			<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
@@ -149,8 +151,6 @@ templ EditPost(post models.Post) {
 							'pre { background-color: #2c2c2c; border: 1px solid #444; border-radius: 4px; padding: 10px; color: #e0e0e0; font-family: "Courier New", Courier, monospace; line-height: 1.5; white-space: pre-wrap; } ' +
 							'pre code { background: transparent; color: #e0e0e0; font-family: "Courier New", Courier, monospace; } ' +
 							'div { margin: 0; padding: 0; }',
-						skin: window.matchMedia("(prefers-color-scheme: dark)").matches ? "oxide-dark" : "",
-						content_css: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "",
 						height: 400,
 						setup: function(editor) {
 							editor.on('change', function(e) {
@@ -171,10 +171,8 @@ templ EditPost(post models.Post) {
 						menubar: true,
 						statusbar: true,
 						content_style: 'body { font-family: Inter, sans-serif; background-color: #2c2c2c; color: #e0e0e0; }',
-						skin: window.matchMedia("(prefers-color-scheme: dark)").matches ? "oxide-dark" : "",
-						content_css: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "",
 						height: 100,
-						min_height: 60, // Set minimum height for the TinyMCE editor
+						min_height: 60,
 						setup: function(editor) {
 							editor.on('change', function(e) {
 								editor.save();
@@ -186,6 +184,7 @@ templ EditPost(post models.Post) {
 						console.error("TinyMCE title editor failed to initialize:", error);
 					});
 
+					// Form submit handler (keep your existing code)
 					document.getElementById('edit-post-form').addEventListener('submit', function(e) {
 						e.preventDefault();
 						const titleContent = tinymce.get('title') ? tinymce.get('title').getContent() : document.getElementById('title').value;

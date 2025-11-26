@@ -9,45 +9,79 @@ templ CreatePost(userID string) {
 			<title>Create Post - BlogFlex</title>
 			<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
 			<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet"/>
-			<script src="https://cdn.tiny.cloud/1/3ptuccpjxd9qd48kti566c6geohm1x5u2jhrl4szbz9l14ee/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+			<!-- TinyMCE Script - Updated to version 8 -->
+			<script src="https://cdn.tiny.cloud/1/3ptuccpjxd9qd48kti566c6geohm1x5u2jhrl4szbz9l14ee/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+			<!-- Prism.js for code syntax highlighting -->
+			<link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-okaidia.css" rel="stylesheet"/>
+			<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
 			<style>
-        body {
-          font-family: 'Inter', sans-serif;
-          background-color: #121212;
-          color: #e0e0e0;
-        }
-        .container {
-          max-width: 1200px;
-        }
-        .card {
-          background-color: #1e1e1e;
-          border: none;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-          border-radius: 10px;
-        }
-        .card-body {
-          padding: 20px;
-        }
-        .card-title {
-          color: #bb86fc;
-        }
-        .form-control {
-          background-color: #2c2c2c;
-          border: none;
-          color: #e0e0e0;
-        }
-        .form-control:focus {
-          background-color: #2c2c2c;
-          color: #e0e0e0;
-        }
-        .btn-primary {
-          background-color: #bb86fc;
-          border: none;
-        }
-        .btn-primary:hover {
-          background-color: #3700b3;
-        }
-      </style>
+				body {
+					font-family: 'Inter', sans-serif;
+					background-color: #121212;
+					color: #e0e0e0;
+				}
+				.container {
+					max-width: 1200px;
+				}
+				.card {
+					background-color: #1e1e1e;
+					border: none;
+					box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+					border-radius: 10px;
+				}
+				.card-body {
+					padding: 20px;
+				}
+				.card-title {
+					color: #bb86fc;
+				}
+				.form-control {
+					background-color: #2c2c2c;
+					border: none;
+					color: #e0e0e0;
+				}
+				.form-control:focus {
+					background-color: #2c2c2c;
+					color: #e0e0e0;
+				}
+				.btn-primary {
+					background-color: #bb86fc;
+					border: none;
+				}
+				.btn-primary:hover {
+					background-color: #3700b3;
+				}
+				/* Style for code blocks in TinyMCE */
+				.mce-content-body pre {
+					background-color: #2c2c2c;
+					border: 1px solid #444;
+					border-radius: 4px;
+					padding: 10px;
+					color: #e0e0e0;
+					font-family: 'Courier New', Courier, monospace;
+					line-height: 1.5;
+					white-space: pre-wrap;
+				}
+				.mce-content-body pre code {
+					background: transparent;
+					color: #e0e0e0;
+					font-family: 'Courier New', Courier, monospace;
+				}
+				/* Minimize visual impact of divs */
+				.mce-content-body div {
+					border: none !important;
+				}
+				/* Ensure TinyMCE toolbar is visible */
+				.tox-tinymce {
+					z-index: 1000 !important;
+				}
+				/* Optional: Add min-height to textarea for consistency */
+				#title {
+					min-height: 60px;
+				}
+			</style>
 		</head>
 		<body>
 			<div class="container mt-5">
@@ -59,11 +93,11 @@ templ CreatePost(userID string) {
 								<form id="create-post-form" hx-post="/protected/posts" hx-redirect="true" hx-target="#response-message" hx-swap="innerHTML" method="POST">
 									<div class="form-group">
 										<label for="title">Title</label>
-										<textarea id="title" name="title" rows="2" class="form-control"></textarea>
+										<textarea id="title" name="title" rows="2" class="form-control" style="height: 50px; min-height: 60px;" required></textarea>
 									</div>
 									<div class="form-group">
 										<label for="content">Content</label>
-										<textarea id="content" name="content" rows="10" class="form-control"></textarea>
+										<textarea id="content" name="content" rows="10" class="form-control" required></textarea>
 									</div>
 									<input type="hidden" name="user_id" value={ userID }/>
 									<div class="text-center">
@@ -77,31 +111,117 @@ templ CreatePost(userID string) {
 				</div>
 			</div>
 			<script>
-        document.addEventListener("DOMContentLoaded", function() {
-          tinymce.init({
-            selector: '#title, #content',
-            // Using only free plugins
-            plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
-            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
-            skin: "oxide-dark",
-            content_css: "dark",
-            setup: function(editor) {
-              editor.on('change', function(e) {
-                editor.save();
-              });
-            }
-          });
+				document.addEventListener("DOMContentLoaded", function() {
+					console.log("DOM loaded, initializing TinyMCE...");
 
-          document.getElementById('create-post-form').addEventListener('submit', function(e) {
-            const title = tinymce.get('title').getContent().trim();
-            const content = tinymce.get('content').getContent().trim();
-            if (!title || !content) {
-              e.preventDefault();
-              alert('Both Title and Content are required.');
-            }
-          });
-        });
-      </script>
+					// Initialize content editor
+					tinymce.init({
+						selector: '#content',
+						plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount code',
+						toolbar: 'undo redo | codesample | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | code | removeformat',
+						fontsize_formats: '8pt 10pt 12pt 14pt 18pt 24pt 36pt',
+						codesample_languages: [
+							{ text: 'Text', value: 'text' },
+							{ text: 'HTML/XML', value: 'markup' },
+							{ text: 'JavaScript', value: 'javascript' },
+							{ text: 'CSS', value: 'css' },
+							{ text: 'Go', value: 'go' },
+							{ text: 'Python', value: 'python' },
+						],
+						codesample_global_prismjs: true,
+						forced_root_block: 'p',
+						verify_html: false,
+						cleanup: false,
+						valid_elements: 'p,br,strong/em,b/i,ul/ol/li,a[href],pre/code[class|data-mce-type],img[src|alt|width|height],table,thead,tbody,tr,th,td,span[style]',
+						paste_preprocess: function(plugin, args) {
+							args.content = args.content.replace(/<div>/gi, '<p>').replace(/<\/div>/gi, '</p>');
+						},
+						init_instance_callback: function(editor) {
+							var content = editor.getContent();
+							content = content.replace(/<div>/gi, '<p>').replace(/<\/div>/gi, '</p>');
+							editor.setContent(content);
+							console.log("Content editor initialized successfully.");
+						},
+						content_style: 'body { font-family: Inter, sans-serif; background-color: #1e1e1e; color: #e0e0e0; } ' +
+							'pre { background-color: #2c2c2c; border: 1px solid #444; border-radius: 4px; padding: 10px; color: #e0e0e0; font-family: "Courier New", Courier, monospace; line-height: 1.5; white-space: pre-wrap; } ' +
+							'pre code { background: transparent; color: #e0e0e0; font-family: "Courier New", Courier, monospace; } ' +
+							'div { margin: 0; padding: 0; }',
+						height: 400,
+						setup: function(editor) {
+							editor.on('change', function(e) {
+								editor.save();
+							});
+						}
+					}).then(function(editors) {
+						console.log("TinyMCE content editor initialized:", editors);
+					}, function(error) {
+						console.error("TinyMCE content editor failed to initialize:", error);
+					});
+
+					// Initialize title editor
+					tinymce.init({
+						selector: '#title',
+						plugins: 'autolink emoticons link wordcount',
+						toolbar: 'undo redo | fontfamily fontsize | bold italic underline | align lineheight | removeformat',
+						menubar: true,
+						statusbar: true,
+						content_style: 'body { font-family: Inter, sans-serif; background-color: #2c2c2c; color: #e0e0e0; }',
+						height: 100,
+						min_height: 60,
+						setup: function(editor) {
+							editor.on('change', function(e) {
+								editor.save();
+							});
+						}
+					}).then(function(editors) {
+						console.log("TinyMCE title editor initialized:", editors);
+					}, function(error) {
+						console.error("TinyMCE title editor failed to initialize:", error);
+					});
+
+					// Form submit handler
+					document.getElementById('create-post-form').addEventListener('submit', function(e) {
+						e.preventDefault();
+						const titleContent = tinymce.get('title') ? tinymce.get('title').getContent() : document.getElementById('title').value;
+						const contentContent = tinymce.get('content') ? tinymce.get('content').getContent() : document.getElementById('content').value;
+						if (titleContent === '' || contentContent === '') {
+							alert('Both Title and Content are required.');
+							return;
+						}
+						document.getElementById('title').value = titleContent;
+						document.getElementById('content').value = contentContent;
+						const form = this;
+						const formData = new FormData(form);
+						fetch(form.getAttribute('hx-post'), {
+							method: 'POST',
+							body: formData,
+							headers: {
+								'Accept': 'application/json',
+							}
+						})
+						.then(response => {
+							if (response.ok) {
+								const redirectUrl = response.headers.get('HX-Redirect');
+								if (redirectUrl) {
+									window.location.href = redirectUrl;
+								} else {
+									return response.text().then(text => {
+										document.getElementById('response-message').innerHTML = text || 'Post created successfully!';
+									});
+								}
+							} else {
+								return response.text().then(text => {
+									document.getElementById('response-message').innerHTML = text || 'Failed to create post.';
+								});
+							}
+						})
+						.catch(error => {
+							console.error('Error:', error);
+							document.getElementById('response-message').innerHTML = 'An error occurred while creating the post.';
+						});
+					});
+				});
+			</script>
 			<script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
 		</body>
 	</html>
