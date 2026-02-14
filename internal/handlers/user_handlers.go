@@ -35,28 +35,55 @@ func ValidateURL(imagePath string) bool {
 	return err == nil
 }
 
+func parseGraphQLTime(value interface{}) time.Time {
+	timeStr, ok := value.(string)
+	if !ok || strings.TrimSpace(timeStr) == "" {
+		return time.Time{}
+	}
+
+	if parsed, err := time.Parse(time.RFC3339, timeStr); err == nil {
+		return parsed
+	}
+
+	if parsed, err := time.Parse("2006-01-02T15:04:05", timeStr); err == nil {
+		return parsed
+	}
+
+	return time.Time{}
+}
+
 func MainPageHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "session-name")
 	userID := session.Values["userID"]
 	loggedIn := userID != nil
 
 	query := `
-    query {
-        blogs(order_by: [{updated_at: desc}, {created_at: desc}]) {
-            id
-            name
-            description
-            image_path
-            user {
-                username
-            }
-            created_at
-            posts(order_by: [{updated_at: desc}, {created_at: desc}], limit: 1) {
-                title
-                created_at
-            }
-        }
+query {
+  blogs(
+    order_by: [
+      { posts_aggregate: { max: { updated_at: desc_nulls_last } } }
+      { posts_aggregate: { max: { created_at: desc } } }
+      { updated_at: desc_nulls_last }
+      { created_at: desc }
+    ]
+  ) {
+    id
+    name
+    description
+    image_path
+    created_at
+    updated_at
+    user {
+      username
     }
+    posts(order_by: [{updated_at: desc_nulls_last}, {created_at: desc}], limit: 1) {
+      id
+      title
+      created_at
+      updated_at
+    }
+  }
+}
 `
 	result, err := database.ExecuteGraphQL(query, nil)
 	if err != nil {
@@ -107,23 +134,24 @@ func MainPageHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			createdAt, err := time.Parse("2006-01-02T15:04:05", postMap["created_at"].(string))
-			if err != nil {
-				log.Printf("Error parsing post created_at time: %v", err)
-				continue
+			postCreatedAt := parseGraphQLTime(postMap["created_at"])
+			postUpdatedAt := parseGraphQLTime(postMap["updated_at"])
+			if postUpdatedAt.IsZero() {
+				postUpdatedAt = postCreatedAt
 			}
 
 			latestPost = &models.Post{
 				Title:              postMap["title"].(string),
-				FormattedCreatedAt: helpers.FormatTime(createdAt),
+				CreatedAt:          postCreatedAt,
+				UpdatedAt:          postUpdatedAt,
+				FormattedCreatedAt: helpers.FormatTime(postCreatedAt),
 			}
 		}
 
-		createdAtStr := blogMap["created_at"].(string)
-		createdAt, err := time.Parse("2006-01-02T15:04:05", createdAtStr)
-		if err != nil {
-			log.Printf("Error parsing blog created_at time: %v", err)
-			continue
+		createdAt := parseGraphQLTime(blogMap["created_at"])
+		updatedAt := parseGraphQLTime(blogMap["updated_at"])
+		if updatedAt.IsZero() {
+			updatedAt = createdAt
 		}
 
 		blogs = append(blogs, models.Blog{
@@ -131,6 +159,8 @@ func MainPageHandler(w http.ResponseWriter, r *http.Request) {
 			Name:               blogMap["name"].(string),
 			Description:        blogMap["description"].(string),
 			ImagePath:          imagePath,
+			CreatedAt:          createdAt,
+			UpdatedAt:          updatedAt,
 			FormattedCreatedAt: helpers.FormatTime(createdAt),
 			User: &models.User{
 				Username: userMap["username"].(string),
@@ -139,18 +169,23 @@ func MainPageHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// Sort blogs by the latest post date
+	// Sort blogs by effective update date (latest post update -> blog update -> blog creation)
 	sort.SliceStable(blogs, func(i, j int) bool {
-		if blogs[i].LatestPost == nil && blogs[j].LatestPost == nil {
-			return false
+		iUpdated := blogs[i].UpdatedAt
+		if blogs[i].LatestPost != nil && blogs[i].LatestPost.UpdatedAt.After(iUpdated) {
+			iUpdated = blogs[i].LatestPost.UpdatedAt
 		}
-		if blogs[i].LatestPost == nil {
-			return false
+
+		jUpdated := blogs[j].UpdatedAt
+		if blogs[j].LatestPost != nil && blogs[j].LatestPost.UpdatedAt.After(jUpdated) {
+			jUpdated = blogs[j].LatestPost.UpdatedAt
 		}
-		if blogs[j].LatestPost == nil {
-			return true
+
+		if iUpdated.Equal(jUpdated) {
+			return blogs[i].CreatedAt.After(blogs[j].CreatedAt)
 		}
-		return blogs[i].LatestPost.FormattedCreatedAt > blogs[j].LatestPost.FormattedCreatedAt
+
+		return iUpdated.After(jUpdated)
 	})
 
 	log.Printf("Blogs: %+v", blogs)

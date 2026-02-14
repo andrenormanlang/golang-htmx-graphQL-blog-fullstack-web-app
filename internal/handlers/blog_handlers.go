@@ -88,13 +88,15 @@ func CreateBlogHandler(w http.ResponseWriter, r *http.Request) {
 func BlogListHandler(w http.ResponseWriter, r *http.Request) {
 	query := `
         query {
-            blogs(order_by: [{updated_at: desc}, {created_at: desc}]) {
+            blogs(order_by: [{updated_at: desc_nulls_last}, {created_at: desc}]) {
                 id
                 name
                 description
                 user {
                     username
                 }
+                created_at
+                updated_at
             }
         }
     `
