@@ -401,11 +401,10 @@ func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
 		Username: username,
 	}
 
-	comment.UserID = userID
-	formattedCreatedAt := helpers.FormatTime(comment.CreatedAt)
-	comment.FormattedCreatedAt = formattedCreatedAt
+comment.UserID = userID
+formattedCreatedAt := helpers.FormatTime(comment.CreatedAt)
 
-	// Render the new comment as HTML
+// Render the new comment as HTML
 	commentHTML := fmt.Sprintf(`
         <div class="list-group-item list-group-item-action mt-2 pt-2" id="comment-%d">
             <div class="d-flex justify-content-between">
@@ -628,16 +627,15 @@ func EditCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updatedCommentData := returning[0].(map[string]interface{})
-	comment := models.Comment{
-		ID:      uint(updatedCommentData["id"].(float64)),
-		Content: updatedCommentData["content"].(string),
-		User: &models.User{
-			ID:       updatedCommentData["user"].(map[string]interface{})["id"].(string),
-			Username: updatedCommentData["user"].(map[string]interface{})["username"].(string),
-		},
-		UserID:    updatedCommentData["user_id"].(string),
-		CreatedAt: time.Now(), // Default value
-	}
+comment := models.Comment{
+ID:      uint(updatedCommentData["id"].(float64)),
+Content: updatedCommentData["content"].(string),
+User: &models.User{
+ID:       updatedCommentData["user"].(map[string]interface{})["id"].(string),
+Username: updatedCommentData["user"].(map[string]interface{})["username"].(string),
+},
+CreatedAt: time.Now(), // Default value
+}
 
 	// Parse the created_at timestamp
 	if createdAtStr, ok := updatedCommentData["created_at"].(string); ok {
@@ -646,8 +644,7 @@ func EditCommentHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	formattedCreatedAt := helpers.FormatTime(comment.CreatedAt)
-	comment.FormattedCreatedAt = formattedCreatedAt
+formattedCreatedAt := helpers.FormatTime(comment.CreatedAt)
 
 	// Render the updated comment HTML
 	commentHTML := fmt.Sprintf(`
@@ -680,10 +677,9 @@ func EditCommentHandler(w http.ResponseWriter, r *http.Request) {
 				</button>
 				<button class="btn btn-sm btn-secondary" onclick="cancelEdit(%d)">Cancel</button>
 			</div>
-		</div>`,
-		comment.ID, comment.User.Username, formattedCreatedAt,
-		comment.ID, comment.ID, comment.ID, comment.ID, comment.Content, comment.ID, comment.ID,
-		comment.ID, comment.ID, comment.ID, comment.ID)
+</div>`,
+comment.ID, comment.User.Username, formattedCreatedAt,
+comment.ID, comment.ID, comment.ID, comment.ID, comment.Content, comment.ID, comment.ID, comment.Content, comment.ID, comment.ID, comment.ID, comment.ID)
 
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
